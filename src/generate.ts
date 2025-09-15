@@ -11,7 +11,17 @@ async function generateDatasource() {
   });
   // load documents from current directory into an index
   const reader = new SimpleDirectoryReader();
-  const documents = await reader.loadData("data");
+  const allDocuments = await reader.loadData("data");
+
+  // Filter out image files that cannot be embedded by the current vector store
+  const documents = allDocuments.filter((doc: any) => {
+    const filePath =
+      (doc?.metadata && (doc.metadata.file_path || doc.metadata.filePath)) ||
+      doc?.id_ ||
+      "";
+    const lower = String(filePath).toLowerCase();
+    return !/(\.png|\.jpe?g|\.gif|\.bmp|\.webp|\.svg)$/i.test(lower);
+  });
 
   await VectorStoreIndex.fromDocuments(documents, {
     storageContext,
